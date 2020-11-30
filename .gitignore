@@ -2,3 +2,4 @@ venv/
 .idea/
 images/
 __pycache__/
+test/
