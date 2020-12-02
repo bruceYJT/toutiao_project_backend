@@ -31,20 +31,19 @@ def login():
     if not check_password_hash(user.code, request.json.get("code")):
         return jsonify({"error": "Invalid code"}), 401
 
-    # token = jwt.encode({
-    #     "userid": str(user.id),
-    #     "username": user.username,
-    #     "email": user.email,
-    #     "password": user.password,
-    #     "created": str(user.created)
-    # }, app.config["SECRET_KEY"])
+    token = jwt.encode({
+        "userid": str(user.id),
+        "username": user.name,
+        "email": user.email,
+        "created": str(user.created)
+    }, app.config["SECRET_KEY"])
 
     return jsonify({
         # "success": True,
         "message": '登录成功',
         "data": {
             "user": user.name,
-            "token": 'token.decode("UTF-8")',
+            "token": token.decode("UTF-8")
             # "email": user.email,
             # "password": user.password,
             # "created": str(user.created)
