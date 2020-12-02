@@ -7,6 +7,22 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import app
 
+def login_required(f):
+    @wraps(f)
+    def wrap(*args,**kwargs):
+        if 'Authorization' in request.headers:
+            authorization_header = request.headers['Authorization']
+            try:
+                token = authorization_header.split(' ')[1]
+                user = jwt.decode(token, app.config["SECRET_KEY"])
+            except:
+                return jsonify({"error": "you are not logged in"}), 401
+            return f(userid = user['userid'], *args, **kwargs)
+        else:
+            return jsonify({"error": "you are not logged in"}),401
+    return wrap
+
+
 @app.route("/mp/v1_0/authorizations", methods=["POST"])
 def login():
     if not request.json.get("mobile"):
@@ -53,16 +69,12 @@ def login():
 
 
 @app.route("/mp/v1_0/user/profile", methods=["GET"])
-def get_user_profile():
-    # 获取解密token
-
+@login_required
+def get_user_profile(userid):
     # 数据库查找信息
-
+    user = User.objects(id=userid).first()
     # 返回数据
     return jsonify({
         'massage': 'ok',
-        'data':{
-            'name': '我是一只小黄鸡',
-            'photo': 'https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=277107686,1381510155&fm=26&gp=0.jpg'
-        }
+        'data':user.to_public_json()
     })
