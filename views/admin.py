@@ -50,3 +50,19 @@ def login():
         },
 
     })
+
+
+@app.route("/mp/v1_0/user/profile", methods=["GET"])
+def get_user_profile():
+    # 获取解密token
+
+    # 数据库查找信息
+
+    # 返回数据
+    return jsonify({
+        'massage': 'ok',
+        'data':{
+            'name': '我是一只小黄鸡',
+            'photo': 'https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=277107686,1381510155&fm=26&gp=0.jpg'
+        }
+    })
