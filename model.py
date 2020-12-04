@@ -112,7 +112,7 @@ class Image(Document):
         'id':str(self.id),
         'user':self.user.name,
         'url':config.base_url + 'images/' + self.url,
-        'isCollect': self.isCollect
+        'is_collected': self.isCollect
       }
 
         return data

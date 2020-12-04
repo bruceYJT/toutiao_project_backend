@@ -158,3 +158,22 @@ def upload(userid):
         "message": 'OK',
         "data": img.to_public_json()
     })
+
+# 素材：收藏/删除素材
+@app.route("/mp/v1_0/user/images/<string:imageId>", methods=["PUT","DELETE"])
+@login_required
+def collectImage(userid,imageId):
+    print(request.method)
+    img = Image.objects(id=imageId).first()
+    if request.method == 'PUT':
+        img.isCollect = request.json.get('collect')
+        img.save()
+    elif request.method == 'DELETE':
+        img.delete()
+    return jsonify({
+        "message": 'OK',
+        "data": {
+            "id": str(img.id),
+            "collect": img.isCollect
+        }
+    })
