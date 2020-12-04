@@ -5,6 +5,9 @@ import hashlib
 from mongoengine import *
 
 #必须使用try except，否则报停止迭代异常
+import config
+
+
 class CustomQuerySet(QuerySet):
     def to_public_json(self):
         result = []
@@ -93,6 +96,23 @@ class Article(Document):
             "url": '/file/' + cover.url
         } for cover in self.covers],
         'channel_id': self.channel.id
+      }
+
+        return data
+
+class Image(Document):
+    user = ReferenceField(User, reverse_delete_rule=CASCADE)
+    url = StringField(max_length=300, required=True)
+    isCollect = BooleanField(required=True,default=False)
+
+    meta = {'queryset_class': CustomQuerySet}
+
+    def to_public_json(self):
+        data = {
+        'id':str(self.id),
+        'user':self.user.name,
+        'url':config.base_url + 'images/' + self.url,
+        'isCollect': self.isCollect
       }
 
         return data

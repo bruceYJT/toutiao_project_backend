@@ -1,8 +1,15 @@
+import os
+import uuid
+
 import jwt
 
-from flask import jsonify, request
+from flask import jsonify, request, send_from_directory
 from functools import wraps
-from model import User,Channel
+
+from mongoengine import Q
+
+import config
+from model import User, Channel, Image
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import app
@@ -22,7 +29,7 @@ def login_required(f):
             return jsonify({"error": "you are not logged in"}),401
     return wrap
 
-
+# 用户：登录
 @app.route("/mp/v1_0/authorizations", methods=["POST"])
 def login():
     if not request.json.get("mobile"):
@@ -67,7 +74,7 @@ def login():
 
     })
 
-
+# 用户：获取用户信息
 @app.route("/mp/v1_0/user/profile", methods=["GET"])
 @login_required
 def get_user_profile(userid):
@@ -79,6 +86,7 @@ def get_user_profile(userid):
         'data':user.to_public_json()
     })
 
+# 文章：获取频道
 @app.route('/mp/v1_0/channels', methods=["GET"])
 def get_channels():
     channels = Channel.objects()
@@ -88,4 +96,65 @@ def get_channels():
         'data':{
             'channels':channels.to_public_json()
         }
+    })
+
+# 素材：加载图片文件
+@app.route("/images/<string:filename>")
+def images_rsp(filename):
+    return send_from_directory(config.image_upload_folder, filename)
+
+# 素材：获取素材图片
+@app.route("/mp/v1_0/user/images", methods=["GET"])
+@login_required
+def get_images(userid):
+    user = User.objects(id=userid).first()
+    collect = request.args.get("collect")
+    if collect == 'true':
+        imgs = Image.objects(Q(user=user) & Q(isCollect=True))
+    elif collect == 'false':
+        imgs = Image.objects(user=user)
+
+    page = int(request.args.get("page"))
+    per_page = int(request.args.get("per_page"))
+
+    paginated_imgs = imgs.skip((page - 1) * per_page).limit(per_page)
+
+    return jsonify({
+        "message": 'OK',
+        "data": {
+            "total_count": imgs.count(),
+            "page": page,
+            "per_page": per_page,
+            "results": paginated_imgs.to_public_json()
+        }
+    })
+
+
+# 素材：上传素材图片
+@app.route('/mp/v1_0/user/images', methods=["POST"])
+@login_required
+def upload(userid):
+    user = User.objects(id=userid).first()
+    image = request.files.get("image")
+    if image:
+        if not image.filename.endswith(tuple([".jpg", ".png", ".mp4", ".gif"])):
+            return jsonify({"error": "Image is not valid"}), 409
+
+        # Generate random filename
+        filename = str(uuid.uuid4()).replace("-", "") + "." + image.filename.split(".")[-1]
+
+        if not os.path.isdir(config.image_upload_folder):
+            os.makedirs(config.image_upload_folder)
+
+        image.save(os.path.join(config.image_upload_folder, filename))
+        img = Image(
+            url=filename,
+            user=user
+        ).save()
+    else:
+        filename = None
+
+    return jsonify({
+        "message": 'OK',
+        "data": img.to_public_json()
     })
