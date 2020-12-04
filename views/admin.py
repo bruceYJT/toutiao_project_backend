@@ -2,7 +2,7 @@ import jwt
 
 from flask import jsonify, request
 from functools import wraps
-from model import User
+from model import User,Channel
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import app
@@ -77,4 +77,15 @@ def get_user_profile(userid):
     return jsonify({
         'massage': 'ok',
         'data':user.to_public_json()
+    })
+
+@app.route('/mp/v1_0/channels', methods=["GET"])
+def get_channels():
+    channels = Channel.objects()
+    print(channels.to_public_json())
+    return jsonify({
+        'massage': 'ok',
+        'data':{
+            'channels':channels.to_public_json()
+        }
     })

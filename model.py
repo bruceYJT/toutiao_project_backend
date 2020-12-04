@@ -4,6 +4,19 @@ import hashlib
 
 from mongoengine import *
 
+#必须使用try except，否则报停止迭代异常
+class CustomQuerySet(QuerySet):
+    def to_public_json(self):
+        result = []
+        try:
+            for doc in self:
+                json = doc.to_public_json()
+                result.append(json)
+        except:
+            print('error')
+
+        return result
+
 
 connect("yesthday_toutiao")
 
@@ -26,6 +39,19 @@ class User(Document):
             "gender": self.gender,
             "intro": self.intro,
             'email': self.email
+        }
+
+        return data
+
+class Channel(Document):
+    name = StringField(max_length=120,required=True)
+
+    meta = {'queryset_class': CustomQuerySet}
+
+    def to_public_json(self):
+        data = {
+            'id': str(self.id),
+            'name': self.name,
         }
 
         return data
