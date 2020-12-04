@@ -55,3 +55,44 @@ class Channel(Document):
         }
 
         return data
+
+class Cover(Document):
+    url = StringField(max_length=300, required=True)
+
+    meta = {'queryset_class': CustomQuerySet}
+
+    def to_public_json(self):
+        data = {
+            "message":"文件上传成功",
+            "data": {
+                "id": str(self.id),
+                "url": '/file/' + self.url,
+            },
+        }
+
+        return data
+
+
+class Article(Document):
+    title = StringField(max_length=120, required=True)
+    user = ReferenceField(User, reverse_delete_rule=CASCADE)
+    channel = ReferenceField(Channel, reverse_delete_rule=CASCADE)
+    content = StringField(max_length=5000)
+    created = DateTimeField(required=True, default=datetime.datetime.now())
+    covers = ListField(ReferenceField(Cover, reverse_delete_rule=CASCADE))
+    status = IntField(required=True)
+
+    meta = {'queryset_class': CustomQuerySet}
+
+    def to_public_json(self):
+        data = {
+        'title':self.title,
+        'content':self.content,
+        "cover": [{
+            "id": str(cover.id),
+            "url": '/file/' + cover.url
+        } for cover in self.covers],
+        'channel_id': self.channel.id
+      }
+
+        return data
