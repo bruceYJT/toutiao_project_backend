@@ -9,7 +9,7 @@ from functools import wraps
 from mongoengine import Q
 
 import config
-from model import User, Channel, Image
+from model import User, Channel, Image, Article, Cover
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import app
@@ -97,6 +97,48 @@ def get_channels():
             'channels':channels.to_public_json()
         }
     })
+
+# w文章：增加文章
+@app.route('/mp/v1_0/articles', methods=["POST"])
+@login_required
+def creat_article(userid):
+    draft = request.args.get('draft')
+    data = request.json
+    cover = Cover(
+        type = data.get("cover")['type'],
+        images = data.get("cover")['images']
+    ).save()
+    if draft == False:
+        astatus = 1
+    else:
+        astatus = 0
+
+    article = Article(
+        title=data.get('title'),
+        user = User.objects(id == userid).first(),
+        channel = data['channel_id'],
+        content = data['content'],
+        covers = cover,
+        status = astatus
+    ).save()
+
+    return jsonify({
+        "message": 'OK'
+    })
+
+# 文章：获取全部文章
+# @app.route("/mp/v1_0/articles")
+# @login_required
+# def get_articles(userid):
+#     user = User.objects(id == userid).first()
+#     articles = Article.objects(user == user)
+#     articles_list = {
+#         articles
+#     }
+#     return jsonify({
+#         "message": 'OK'
+#     })
+
 
 # 素材：加载图片文件
 @app.route("/images/<string:filename>")
