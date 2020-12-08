@@ -63,6 +63,14 @@ class Cover(Document):
     type = IntField(required=True)
     images = ListField(StringField(max_length=200))
 
+    def to_public_json(self):
+        data = {
+            'type':self.type,
+            'images':self.images
+        }
+
+        return data
+
 
 class Article(Document):
     title = StringField(max_length=120, required=True)
@@ -77,14 +85,12 @@ class Article(Document):
 
     def to_public_json(self):
         data = {
-        'title':self.title,
-        'content':self.content,
-        "cover": [{
-            "id": str(cover.id),
-            "url": '/file/' + cover.url
-        } for cover in self.covers],
-        'channel_id': self.channel.id
-      }
+            'id':str(self.id),
+            'title':self.title,
+            'status':self.status,
+            'pubdate':self.created.strftime('%Y-%m-%d %H:%M'),
+            "cover": self.covers.to_public_json()
+        }
 
         return data
 

@@ -108,8 +108,9 @@ def creat_article(userid):
         type = data.get("cover")['type'],
         images = data.get("cover")['images']
     ).save()
-    if draft == False:
-        astatus = 1
+    print(draft)
+    if draft == 'false':
+        astatus = 2
     else:
         astatus = 0
 
@@ -127,17 +128,33 @@ def creat_article(userid):
     })
 
 # 文章：获取全部文章
-# @app.route("/mp/v1_0/articles")
-# @login_required
-# def get_articles(userid):
-#     user = User.objects(id == userid).first()
-#     articles = Article.objects(user == user)
-#     articles_list = {
-#         articles
-#     }
-#     return jsonify({
-#         "message": 'OK'
-#     })
+@app.route("/mp/v1_0/articles", methods=["GET"])
+@login_required
+def get_articles(userid):
+    user = User.objects(id == userid).first()
+    page = int(request.args.get('page'))
+    per_page = int(request.args.get('per_page'))
+    kws = {}
+    if request.args.get("status") != None:
+        kws['status'] = int(request.args.get("status"))
+    if request.args.get("channel_id") != None:
+        channel = Channel.objects(id == request.args.get("channel_id")).first()
+        kws['channel'] = channel
+    if request.args.get("begin_pubdate") != None:
+        kws['created__gte'] = request.args.get("begin_pubdate")
+    if request.args.get("end_pubdate") != None:
+        kws['created__lte'] = request.args.get("end_pubdate")
+    articles = Article.objects(**kws)
+    paginated_articles = articles.skip((page - 1) * per_page).limit(per_page)
+    return jsonify({
+        "message": 'OK',
+        "data": {
+            "total_count": articles.count(),
+            "page": page,
+            "per_page": per_page,
+            "results": paginated_articles.to_public_json()
+        }
+    })
 
 
 # 素材：加载图片文件
