@@ -194,6 +194,19 @@ def upload_article(userid,articleId):
         'message':'ok'
     })
 
+# 文章：删除文章
+@app.route("/mp/v1_0/articles/<string:article_id>", methods=["DELETE"])
+@login_required
+def deleteArticle(userid, article_id):
+    article = Article.objects(id=article_id).first()
+    old_cover = article.covers
+    old_cover.delete()
+    article.delete()
+    return jsonify({
+        "message": 'OK',
+        "data": {}
+    })
+
 # 素材：加载图片文件
 @app.route("/images/<string:filename>")
 def images_rsp(filename):
