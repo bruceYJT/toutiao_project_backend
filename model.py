@@ -89,7 +89,9 @@ class Article(Document):
             'title':self.title,
             'status':self.status,
             'pubdate':self.created.strftime('%Y-%m-%d %H:%M'),
-            "cover": self.covers.to_public_json()
+            "cover": self.covers.to_public_json(),
+            'content': self.content,
+            'channel_id': str(self.channel.id)
         }
 
         return data

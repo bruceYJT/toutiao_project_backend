@@ -116,7 +116,7 @@ def creat_article(userid):
 
     article = Article(
         title=data.get('title'),
-        user = User.objects(id == userid).first(),
+        user = User.objects(id = userid).first(),
         channel = data['channel_id'],
         content = data['content'],
         covers = cover,
@@ -131,14 +131,14 @@ def creat_article(userid):
 @app.route("/mp/v1_0/articles", methods=["GET"])
 @login_required
 def get_articles(userid):
-    user = User.objects(id == userid).first()
+    user = User.objects(id = userid).first()
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
     kws = {}
     if request.args.get("status") != None:
         kws['status'] = int(request.args.get("status"))
     if request.args.get("channel_id") != None:
-        channel = Channel.objects(id == request.args.get("channel_id")).first()
+        channel = Channel.objects(id = request.args.get("channel_id")).first()
         kws['channel'] = channel
     if request.args.get("begin_pubdate") != None:
         kws['created__gte'] = request.args.get("begin_pubdate")
@@ -155,6 +155,19 @@ def get_articles(userid):
             "results": paginated_articles.to_public_json()
         }
     })
+
+@app.route('/mp/v1_0/articles/<string:articleId>', methods=['GET'])
+@login_required
+def get_article(userid,articleId):
+    user = User.objects(id = userid).first()
+    article = Article.objects(Q(user=user) & Q(id=articleId)).first()
+    return jsonify({
+        "message":'OK',
+        "data": {
+            **article.to_public_json()
+        }
+    })
+
 
 
 # 素材：加载图片文件
