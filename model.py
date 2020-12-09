@@ -78,7 +78,7 @@ class Article(Document):
     channel = ReferenceField(Channel, reverse_delete_rule=CASCADE)
     content = StringField(max_length=5000)
     created = DateTimeField(required=True, default=datetime.datetime.now())
-    covers = ReferenceField(Cover, reverse_delete_rule=CASCADE)
+    covers = ReferenceField(Cover)
     status = IntField(required=True)
 
     meta = {'queryset_class': CustomQuerySet}

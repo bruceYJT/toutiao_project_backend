@@ -90,7 +90,6 @@ def get_user_profile(userid):
 @app.route('/mp/v1_0/channels', methods=["GET"])
 def get_channels():
     channels = Channel.objects()
-    print(channels.to_public_json())
     return jsonify({
         'massage': 'ok',
         'data':{
@@ -134,7 +133,9 @@ def get_articles(userid):
     user = User.objects(id = userid).first()
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
-    kws = {}
+    kws = {
+        'user':user
+    }
     if request.args.get("status") != None:
         kws['status'] = int(request.args.get("status"))
     if request.args.get("channel_id") != None:
@@ -152,10 +153,11 @@ def get_articles(userid):
             "total_count": articles.count(),
             "page": page,
             "per_page": per_page,
-            "results": paginated_articles.to_public_json()
+            "results": articles.to_public_json()
         }
     })
 
+# 文章；获取指定文章
 @app.route('/mp/v1_0/articles/<string:articleId>', methods=['GET'])
 @login_required
 def get_article(userid,articleId):
@@ -168,7 +170,29 @@ def get_article(userid,articleId):
         }
     })
 
+# 文章：提交编辑指定文章
+@app.route('/mp/v1_0/articles/<string:articleId>', methods=['PUT'])
+@login_required
+def upload_article(userid,articleId):
+    data = request.json
+    print(data)
+    channel = Channel.objects(id = data.get('channel_id')).first()
+    article = Article.objects(id = articleId).first()
+    d_cover = article.covers
+    cover = Cover(
+        type = data.get('cover')['type'],
+        images = data.get('cover')['images']
+    ).save()
+    article.title = data.get('title')
+    article.channel = channel
+    article.content = data.get('content')
+    article.covers = cover
+    d_cover.delete()
+    article.save()
 
+    return jsonify({
+        'message':'ok'
+    })
 
 # 素材：加载图片文件
 @app.route("/images/<string:filename>")
