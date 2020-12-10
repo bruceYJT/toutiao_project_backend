@@ -60,3 +60,26 @@ def app_login():
         },
 
     })
+
+@app.route("/app/v1_0/user")
+@login_required
+def get_user_info(userid):
+    userinfo = User.objects(id=userid).first()
+    if not userinfo:
+        return jsonify({"message": "Invalid user."})
+    else:
+        return jsonify({
+            "message": 'OK',
+            "data": {
+                "name": userinfo.name,
+                "photo": userinfo.photo,
+                "is_media": False,
+                "intro": userinfo.intro,
+                "certi": "",
+                "art_count": 5,
+                "follow_count": 5,
+                "fans_count": 5,
+                "like_count": 5,
+                "id": str(userinfo.id)
+            }
+        })
