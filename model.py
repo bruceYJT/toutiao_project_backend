@@ -20,6 +20,16 @@ class CustomQuerySet(QuerySet):
 
         return result
 
+    def to_public_json_client(self):
+        result = []
+        try:
+            for doc in self:
+                jsonDic = doc.to_public_json_client()
+                result.append(jsonDic)
+        except:
+            print('error')
+
+        return result
 
 connect("yesthday_toutiao")
 
@@ -50,6 +60,7 @@ class User(Document):
 
     def to_public_json(self):
         data = {
+            "id": str(self.id),
             "mobile": self.mobile,
             "name": self.name,
             "created": self.created.strftime("%Y-%m-%d %H:%M:%S"),
@@ -82,6 +93,8 @@ class Article(Document):
     created = DateTimeField(required=True, default=datetime.datetime.now())
     covers = ReferenceField(Cover)
     status = IntField(required=True)
+    user_collect = ListField(ReferenceField(User, reverse_delete_rule=CASCADE))
+    is_collected = BooleanField(required=False)
 
     meta = {'queryset_class': CustomQuerySet}
 
@@ -96,6 +109,20 @@ class Article(Document):
             'channel_id': str(self.channel.id)
         }
 
+        return data
+
+    def to_public_json_client(self):
+        data = {
+            "art_id": str(self.id),
+            "status": self.status,
+            "title" : self.title,
+            "pubdate":self.created,
+            "aut_name":self.user.name,
+            "aut_id":str(self.user.id),
+            "content":self.content,
+            "is_collected":self.is_collected,
+            "cover":self.covers.to_public_json()
+        }
         return data
 
 class Image(Document):
@@ -114,3 +141,20 @@ class Image(Document):
       }
 
         return data
+
+
+if __name__ == '__main__':
+    channel = Channel.objects(id='5fc9aa475b0649bb175dbaab').first()
+    user = User.objects().first()
+    cover = Cover.objects().first()
+    for i in range(33):
+        print(i)
+        article = Article(
+            title=f"ArticleArticleArticle{i}",
+            channel=channel,
+            content=f"ArticleArticleArticlecontentcontentcontent{i+50}",
+            user=user,
+            covers=cover,
+            status=2,
+            created=datetime.datetime.now()
+        ).save()

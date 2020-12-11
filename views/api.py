@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime
 
 import jwt
 
@@ -136,3 +137,58 @@ def delete_user_channel(userid,channelid):
         "message": 'OK',
         "data": {}
     })
+
+def datatime2timestamp(_date):
+    millisec = _date.timestamp() * 1000
+    return int(millisec)
+
+def timestamp2datatime(_timestamp):
+        d = datetime.fromtimestamp(_timestamp / 1000)
+        return d
+
+@app.route("/app/v1_1/articles", methods=["GET"])
+@login_required
+def get_articles_by_channelid(userid):
+    page = 1
+    per_page = 10
+    param = request.args
+    query_timestamp = param.get('timestamp')
+    channel_id = param.get('channel_id')
+    refresh = param.get('refresh')
+    print(refresh)
+    _date = timestamp2datatime(int(query_timestamp))
+    if refresh == 1:
+        articles = Article.objects(Q(channel=channel_id)&Q(created__gt=_date)).order_by("-created")
+        print(len(articles))
+        paginated_articles = articles.skip(len(articles)-10).limit(per_page)
+    else:
+        articles = Article.objects(Q(channel=channel_id)&Q(created__lt=_date)).order_by("-created")
+        paginated_articles = articles.skip((page - 1) * per_page).limit(per_page)
+        print(len(articles))
+    if len(paginated_articles) <= 0:
+        return jsonify({
+            "message": 'OK',
+            "data": {
+                "pre_timestamp": 0,
+                "total_count": articles.count(),
+                "page": page,
+                "per_page": per_page,
+                "results": []
+            }
+        })
+    else:
+        pre_timestamp = datatime2timestamp(paginated_articles[len(paginated_articles) - 1].created)
+        print(pre_timestamp)
+        return jsonify({
+                "message": 'OK',
+                "data": {
+                    "pre_timestamp": pre_timestamp,
+                    "total_count": articles.count(),
+                    "page": page,
+                    "per_page": per_page,
+                    "results": paginated_articles.to_public_json_client()
+                }
+            })
+
+
+    # 文章搜素功能接口的设想，考虑到大量文章的搜索功能优化问题，改用elasticsearch来单独改进文章搜索（存储标题和文章id），再通过其id查询mongodb查询文章详细数据。
