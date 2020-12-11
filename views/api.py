@@ -83,3 +83,31 @@ def get_user_info(userid):
                 "id": str(userinfo.id)
             }
         })
+
+@app.route("/app/v1_0/channels", methods=["GET"])
+@login_required
+def client_get_channels(userid):
+
+    channels = Channel.objects()
+
+    return jsonify({
+        "message": 'OK',
+        "data": {
+            "channels": channels.to_public_json()
+        }
+    })
+
+@app.route("/app/v1_0/user/channels", methods=["PATCH"])
+@login_required
+def user_add_channel(userid):
+    user = User.objects(id=userid).first()
+    body = request.json
+    channels = body.get('channels')
+    channel_id = channels[0]['id']
+    channel_add = Channel.objects(id=channel_id).first()
+    user.channels.append(channel_add)
+    user.save()
+    return jsonify({
+        "message": 'OK',
+        "data": {}
+    })
