@@ -111,3 +111,28 @@ def user_add_channel(userid):
         "message": 'OK',
         "data": {}
     })
+
+@app.route("/app/v1_0/user/channels", methods=["GET"])
+@login_required
+def get_user_channels(userid):
+    user = User.objects(id=userid).first()
+
+    return jsonify({
+        "message": 'OK',
+        "data": {
+            "channels":[channel.to_public_json() for channel in user.channels]
+        }
+    })
+
+@app.route("/app/v1_0/user/channels/<string:channelid>", methods=["DELETE"])
+@login_required
+def delete_user_channel(userid,channelid):
+    user = User.objects(id=userid).first()
+    channel_del = Channel.objects(id=channelid).first()
+    user.channels.remove(channel_del)
+    user.save()
+
+    return jsonify({
+        "message": 'OK',
+        "data": {}
+    })
