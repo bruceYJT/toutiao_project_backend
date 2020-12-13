@@ -56,7 +56,9 @@ class User(Document):
     gender = IntField(required=True)
     intro = StringField(required=True)
     email = StringField(required=True, unique=True)
+    user_following = ListField(ReferenceField("User", reverse_delete_rule=CASCADE))
     channels = ListField(ReferenceField(Channel))
+    birthday = StringField(required=True, default='2000-01-02')
 
     def to_public_json(self):
         data = {
@@ -67,9 +69,30 @@ class User(Document):
             "photo": self.photo,
             "gender": self.gender,
             "intro": self.intro,
-            'email': self.email
+            'email': self.email,
+            "birthday": self.birthday
         }
 
+        return data
+
+class Comment(EmbeddedDocument):
+    content = StringField(max_length=5000)
+    user = ReferenceField(User)
+    created = DateTimeField(required=True, default=datetime.datetime.now())
+    # comments = ListField(EmbeddedDocumentField('Comment'))
+    def to_public_json(self):
+        data = {
+                "com_id": -1,
+                "aut_id": str(self.user.id),
+                "pubdate": self.created,
+                "content": self.content,
+                "is_top": 0,
+                "aut_name": self.user.name,
+                "aut_photo": self.user.photo,
+                "like_count": 0,
+                "reply_count": 0,
+                "is_liking": False
+        }
         return data
 
 class Cover(Document):
@@ -93,6 +116,7 @@ class Article(Document):
     created = DateTimeField(required=True, default=datetime.datetime.now())
     covers = ReferenceField(Cover)
     status = IntField(required=True)
+    comments = ListField(EmbeddedDocumentField(Comment))
     user_collect = ListField(ReferenceField(User, reverse_delete_rule=CASCADE))
     is_collected = BooleanField(required=False)
 
